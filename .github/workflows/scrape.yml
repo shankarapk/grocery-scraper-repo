@@ -4,55 +4,27 @@ on:
   workflow_dispatch:
     inputs:
       items:
-        description: 'Items to search (comma separated)'
+        description: Items to search
         required: false
-        default: 'tomato,onion,potato,rice,milk,eggs,oil,carrot,beans,banana'
+        default: tomato,onion,potato,rice,milk,eggs,oil,carrot
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install Playwright
+      - name: Install
         run: |
           pip install playwright
           python -m playwright install chromium
           python -m playwright install-deps chromium
-
-      - name: Run scraper
+      - name: Run
         run: python scraper.py "${{ github.event.inputs.items }}"
-
-      - name: Upload report
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: grocery-prices
           path: output/
           retention-days: 7
-
-      - name: Show summary
-        run: |
-          echo "## 🛒 Grocery Price Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          python3 -c "
-          import json
-          with open('output/prices.json') as f:
-              data = json.load(f)
-          print('| Item | Best Store | Price | Others |')
-          print('|------|-----------|-------|--------|')
-          for item, options in data['items'].items():
-              if options:
-                  best = options[0]
-                  others = ' · '.join(f\"{o['store_label']} ₹{o['price']:.0f}\" for o in options[1:])
-                  print(f\"| {item} | {best['store_label']} | ₹{best['price']:.0f} | {others} |\")
-              else:
-                  print(f\"| {item} | — | — | — |\")
-          " >> $GITHUB_STEP_SUMMARY
