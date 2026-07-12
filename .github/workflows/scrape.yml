@@ -1,4 +1,4 @@
-name: 🛒 Grocery Price Scraper
+name: Grocery Price Scraper
 
 on:
   workflow_dispatch:
